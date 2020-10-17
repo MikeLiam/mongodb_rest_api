@@ -3,6 +3,9 @@
 const express = require('express');
 const morgan = require('morgan'); 
 const routes = require('./routes')
+
+const db = require("./models");
+
 var cors = require('cors')
 
 // variable to enable global error logging
@@ -52,11 +55,25 @@ app.use((err, req, res, next) => {
   });
 });
 
+
+// connect database
+db.mongoose
+    .connect(db.url, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true
+    })
+    .then(() => {
+        console.log("Connected to the database!");
+    })
+    .catch(err => {
+        console.log("Cannot connect to the database!", err);
+        process.exit();
+    });
 // set port
 app.set('port', process.env.PORT || 5000);
 
 // start listening on port
 const server = app.listen(app.get('port'), () => {
-  console.log(`Express server is listening on port ${server.address().port}`);
+    console.log(`Express server is listening on port ${server.address().port}`);
 });
 // module.exports = app;

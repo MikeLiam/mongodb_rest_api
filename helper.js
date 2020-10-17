@@ -1,8 +1,9 @@
 const auth = require('basic-auth')
 const bcryptjs = require('bcryptjs')
 
-// Get references to our user model.
-const User = require('./models').User;
+// Get references to our models.
+const db = require("./models");
+const User = db.users;
 
 // Validation
 const {
@@ -67,15 +68,15 @@ const authenticateUser =  async (req, res, next) => {
      */
     function filterUser(user) {
         return (({
-            id,
-            emailAddress,
+            _id,
             firstName,
-            lastName
+            lastName,
+            emailAddress,
         }) => ({
-            id,
-            emailAddress,
+            _id,
             firstName,
-            lastName
+            lastName,
+            emailAddress,
         }))(user)
     }
 
@@ -84,30 +85,27 @@ const authenticateUser =  async (req, res, next) => {
     // Parse the user's credentials from the Authorization header.
     const credentials = auth(req)
     // If the user's credentials are available
-    if (credentials) {
+    if (credentials.name && credentials.pass) {
         // Attempt to retrieve the user from the data store
-        const userDB = await User.findOne({
-            where: {
-                emailAddress: credentials.name
+        await User.findOne({emailAddress: credentials.name}, function (err, userDB) {
+            // If a user was successfully retrieved
+            if (userDB) {
+                // compare the user's password (from header) to the user's (from retrieved)
+                const authenticated = bcryptjs
+                .compareSync(credentials.pass, userDB.password)
+                // If the passwords match
+                if (authenticated) {
+                    // Then store the retrieved user object (properties filtered) on the request object
+                    req.currentUser = filterUser(userDB)
+                    console.log(req.currentUser)
+                } else {
+                    message = `Authentication failure for username: ${userDB.emailAddress}`;
+                }
+            } else {
+                message = `User not found for username: ${credentials.name}`;
             }
         })
-        // If a user was successfully retrieved
-        if (userDB) {
-            const user = userDB.dataValues
-            // compare the user's password (from header) to the user's (from retrieved)
-            const authenticated = bcryptjs
-            .compareSync(credentials.pass, user.password)
-            // If the passwords match
-            if (authenticated) {
-                // Then store the retrieved user object (properties filtered) on the request object
-                req.currentUser = filterUser(user)
-                console.log("getting user: ".bgYellow, req.currentUser)
-            } else {
-                message = `Authentication failure for username: ${user.emailAddress}`;
-            }
-        } else {
-            message = `User not found for username: ${credentials.name}`;
-        }
+        
     } else {
         message = 'Auth header not found';
     }

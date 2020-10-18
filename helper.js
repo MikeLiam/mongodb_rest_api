@@ -97,7 +97,6 @@ const authenticateUser =  async (req, res, next) => {
                 if (authenticated) {
                     // Then store the retrieved user object (properties filtered) on the request object
                     req.currentUser = filterUser(userDB)
-                    console.log(req.currentUser)
                 } else {
                     message = `Authentication failure for username: ${userDB.emailAddress}`;
                 }
@@ -124,23 +123,9 @@ const authenticateUser =  async (req, res, next) => {
 
 };
 
-// Object with options to filter course properties to retrieve from database
-const optionsFilterCourse = {
-    attributes: {
-        exclude: ['createdAt', 'updatedAt']
-    },
-    include: [{
-        model: User,
-        as: 'createdBy',
-        attributes: {
-            exclude: ['password', 'createdAt', 'updatedAt']
-        }
-    }, ]
-}
 
 module.exports = {
     userFieldsValidator,
     asyncHandler,
-    authenticateUser,
-    optionsFilterCourse
+    authenticateUser
 }

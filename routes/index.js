@@ -17,13 +17,12 @@ const {
 // Get references to our models.
 const db = require("../models");
 const User = db.users;
-// const Course = require('../models').Course;
+const Post = db.posts;
 
 // *Authenticated Route that returns the current authenticated user.
 router.get('/users', authenticateUser, (req, res) => {
 
     const user = req.currentUser
-    console.log(user)
     res.json({
         user
     });
@@ -61,30 +60,31 @@ router.post('/users', userFieldsValidator, asyncHandler( async (req, res) => {
             res.location(`/`)
             res.status(201).end()
         })
-        .catch(err => {
-            res.status(500).send({
-                message:
-                err.message || "Some error occurred while creating the user"
-            })
-        })
+        // .catch(err => {
+        //     res.status(500).send({
+        //         message:
+        //         err.message || "Some error occurred while creating the user"
+        //     })
+        // })
 
 
 }));
 
-// // Get all courses using defined options
-// router.get('/courses', asyncHandler(async (req, res) => {
+// Get all courses using defined options
+router.get('/posts', asyncHandler(async (req, res) => {
 
-//     const courses = await Course.findAll(optionsFilterCourse);
+    await Post.find(function(err, posts) {
+        if (posts.length) {
+            res.json(posts)
+        } else {
+            res.status(404).json({
+                message: "There are no posts"
+            })
+        }
+    })
     
-//     if (courses) {
-//         res.json(courses)
-//     } else {
-//         res.status(404).json({
-//             message: "There are no courses"
-//         })
-//     }
 
-// }));
+}));
 
 // // Get course with id using defined options
 // router.get('/courses/:id', asyncHandler(async (req, res) => {
@@ -101,15 +101,38 @@ router.post('/users', userFieldsValidator, asyncHandler( async (req, res) => {
 
 // }));
 
-// // *Authenticated Route to create new course and send location to course uri
-// router.post('/courses', authenticateUser, asyncHandler(async (req, res) => {
+// *Authenticated Route to create new course and send location to course uri
+router.post('/posts', authenticateUser, asyncHandler(async (req, res) => {
 
-//     const course = await Course.create(req.body)
-//         .then(course => res.location(`/courses/${course.id}`))
+    const post = new Post(req.body)
+    const error = post.validateSync()
+    console.log(error)
+    if (!error){
+        await post.save(post)
+        .then(post => {
+            res.location(`/posts/${post.id}`);
+            res.status(201).end();
+        })
+        // .catch(err => {
+        //     res.status(500).send({
+        //         message:
+        //         err.message || "Some error occurred while creating the user"
+        //     })
+        // })
+    }else {
+        const errorMessages = []
+        for (const property in error.errors) {
+            errorMessages.push(error.errors[property].message)
+        }
+                // Return the validation errors to the client.
+                return res.status(400).json({
+                    errors: errorMessages
+                });
+    }
 
-//     res.status(201).end()
 
-// }));
+
+}));
 
 // // *Authenticated Route to Update course with id
 // router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {

@@ -5,7 +5,6 @@ const {
     userFieldsValidator,
     asyncHandler,
     authenticateUser,
-    optionsFilterCourse
 } = require('../helper');
 
 // Authentication modules
@@ -60,18 +59,12 @@ router.post('/users', userFieldsValidator, asyncHandler( async (req, res) => {
             res.location(`/`)
             res.status(201).end()
         })
-        // .catch(err => {
-        //     res.status(500).send({
-        //         message:
-        //         err.message || "Some error occurred while creating the user"
-        //     })
-        // })
 
 
 }));
 
 // Get all courses using defined options
-router.get('/posts', asyncHandler(async (req, res) => {
+router.get('/post', asyncHandler(async (req, res) => {
 
     await Post.find(function(err, posts) {
         if (posts.length) {
@@ -86,23 +79,24 @@ router.get('/posts', asyncHandler(async (req, res) => {
 
 }));
 
-// // Get course with id using defined options
-// router.get('/courses/:id', asyncHandler(async (req, res) => {
+// Get course with id using defined options
+router.get('/post/:id', asyncHandler(async (req, res) => {
 
-//     const course = await Course.findByPk(req.params.id, optionsFilterCourse);
+     Post.findById(req.params.id, function (err, post) {
+        if (post) {
+            res.json(post)
+        } else {
+            res.status(404).json({
+                message: "There are no posts"
+            })
+        }
+    });
 
-//     if (course) {
-//         res.json(course)
-//     } else {
-//         res.status(404).json({
-//             message: "There are no courses"
-//         })
-//     }
 
-// }));
+}));
 
 // *Authenticated Route to create new course and send location to course uri
-router.post('/posts', authenticateUser, asyncHandler(async (req, res) => {
+router.post('/post', authenticateUser, asyncHandler(async (req, res) => {
 
     const post = new Post(req.body)
     const error = post.validateSync()
@@ -110,15 +104,10 @@ router.post('/posts', authenticateUser, asyncHandler(async (req, res) => {
     if (!error){
         await post.save(post)
         .then(post => {
-            res.location(`/posts/${post.id}`);
+            res.location(`/post/${post.id}`);
             res.status(201).end();
         })
-        // .catch(err => {
-        //     res.status(500).send({
-        //         message:
-        //         err.message || "Some error occurred while creating the user"
-        //     })
-        // })
+
     }else {
         const errorMessages = []
         for (const property in error.errors) {
@@ -173,27 +162,18 @@ router.post('/posts', authenticateUser, asyncHandler(async (req, res) => {
 //     }
 // }));
 
-// // *Authenticated Route to Delete course with id
-// router.delete('/courses/:id', authenticateUser, asyncHandler(async (req, res, next) => {
-//     // Find course by id(primarykey)
-//     const course = await Course.findByPk(req.params.id);
-//     // If there is a course
-//     if (course) {
-//         // If authenticad user is the same that owns the course
-//         if (course.userId === req.currentUser.id) {
-//             // delete course
-//             await course.destroy()
-//             res.status(204).end()
-//         } else {// authenticaed user doesn't own course
-//             res.status(403).json({
-//                 message: "Current user doesn't own the requested course"
-//             })
-//         }
-//     } else {// there is no course for that id
-//         res.status(404).json({
-//             message: "Course Not Found"
-//         })
-//     }
-// }));
+// *Authenticated Route to Delete course with id
+router.delete('/post/:id', authenticateUser, asyncHandler(async (req, res, next) => {
+    // Find course by id
+    Post.findByIdAndRemove(req.params.id, function (err, post) {
+        if (post._id) {
+            res.status(204).end()
+        } else {
+            res.status(404).json({
+                message: "Post Not Found"
+            })
+        }
+    });
+}));
 
 module.exports = router

@@ -41,7 +41,6 @@ router.post('/users', userFieldsValidator, asyncHandler( async (req, res) => {
         return res.status(400).json({
             errors: errorMessages
         });
-
     }
     // Get the user from the request body.
     const user = new User({
@@ -59,8 +58,6 @@ router.post('/users', userFieldsValidator, asyncHandler( async (req, res) => {
             res.location(`/`)
             res.status(201).end()
         })
-
-
 }));
 
 // Get all courses using defined options
@@ -75,8 +72,6 @@ router.get('/post', asyncHandler(async (req, res) => {
             })
         }
     })
-    
-
 }));
 
 // Get course with id using defined options
@@ -91,8 +86,6 @@ router.get('/post/:id', asyncHandler(async (req, res) => {
             })
         }
     });
-
-
 }));
 
 // *Authenticated Route to create new course and send location to course uri
@@ -118,55 +111,27 @@ router.post('/post', authenticateUser, asyncHandler(async (req, res) => {
                     errors: errorMessages
                 });
     }
-
-
-
 }));
 
-// // *Authenticated Route to Update course with id
-// router.put('/courses/:id', authenticateUser, asyncHandler(async (req, res) => {
-//     // Find course by id(primarykey)
-//     const course = await Course.findByPk(req.params.id);
-//     // If there is a course
-//     if (course) {
-//         // If authenticad user is the same that owns the course
-//         if (course.userId === req.currentUser.id) {
-//             // Update course
-//             const updated = await Course.update(req.body, {
-//                     where: {
-//                         id: req.params.id
-//                     }
-//                 })
-//                 .then(updated => {
-//                     // The promise returns an array with one or two elements. 
-//                     // The first element is always the number of affected rows,
-//                     return updated[0] !== 0
-//                 })
-//             // if any field has been updated
-//             if (updated) {
-//                 res.status(204).end()
-//             } else { // no field has been updated
-//                 res.status(404).json({
-//                     message: "No fields updated. Same previous values?"
-//                 })
-//             }
-//         } else { // authenticaed user doesn't own course
-//             res.status(403).json({
-//                 message: "Current user doesn't own the requested course"
-//             })
-//         }
-//     } else { // there is no course for that id
-//         res.status(404).json({
-//             message: "Course Not Found"
-//         })
-//     }
-// }));
+// *Authenticated Route to Update course with id
+router.put('/post/:id', authenticateUser, asyncHandler(async (req, res) => {
+    // Find post by id and update
+    Post.findByIdAndUpdate(req.params.id, req.body, function (err, post) {
+        if (post) {
+            res.status(204).end()
+        } else {
+            res.status(404).json({
+                message: "Post Not Found"
+            })
+        }
+    });
+}));
 
-// *Authenticated Route to Delete course with id
+// *Authenticated Route to Delete post with id
 router.delete('/post/:id', authenticateUser, asyncHandler(async (req, res, next) => {
-    // Find course by id
+    // Find post by id and remove
     Post.findByIdAndRemove(req.params.id, function (err, post) {
-        if (post._id) {
+        if (post) {
             res.status(204).end()
         } else {
             res.status(404).json({
